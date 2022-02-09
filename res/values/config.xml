@@ -58,11 +58,11 @@
     <integer name="config_caretAnimationDuration">200</integer>
 
 <!-- Hotseat -->
-    <bool name="hotseat_transpose_layout_with_orientation">true</bool>
+    <bool name="hotseat_transpose_layout_with_orientation">false</bool>
 
     <!-- Various classes overriden by projects/build flavors. -->
     <string name="app_filter_class" translatable="false"></string>
-    <string name="icon_provider_class" translatable="false"></string>
+    <string name="icon_provider_class" translatable="false">com.sprd.ext.dynamicicon.DynamicIconProvider</string>
     <string name="drawable_factory_class" translatable="false"></string>
     <string name="user_event_dispatcher_class" translatable="false"></string>
     <string name="stats_log_manager_class" translatable="false"></string>

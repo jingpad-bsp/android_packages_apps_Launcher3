@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <background>
+        <shape android:shape="rectangle">
+            <size
+                android:width="108dp"
+                android:height="108dp" />
+            <gradient
+                android:angle="270"
+                android:endColor="#000000"
+                android:startColor="#000000" />
+        </shape>
+    </background>
+    <foreground>
+        <vector xmlns:android="http://schemas.android.com/apk/res/android"
+            android:width="108dp"
+            android:height="108dp"
+            android:viewportWidth="108"
+            android:viewportHeight="108">
+            <group
+                android:pivotX="54"
+                android:pivotY="54"
+                android:scaleX=".68"
+                android:scaleY=".68">
+
+                <path
+                    android:pathData="M91,49C84.109,49 77.513,46.143 72,42L72,71C72,85.757 60.028,98 46,98C31.972,98 21,85.757 21,71C21,56.243 31.972,44 46,44C47.403,44 48.671,43.77 50,44L50,60C49,60 47.362,60 46,60C39.741,60 35,64.413 35,71C35,77.579 40.741,84 47,84C53.251,84 58,78.579 58,72L58,14L72.001,14C72.001,25.033 80.508,33.975 91,33.975L91,48"
+                    android:strokeWidth="1"
+                    android:fillColor="#FF2553"
+                    android:fillType="nonZero"
+                    android:strokeColor="#00000000"/>
+                <path
+                    android:pathData="M87,45C80.109,45 73.513,42.143 68,38L68,67C68,81.757 56.028,94 42,94C27.972,94 17,81.757 17,67C17,52.243 27.972,40 42,40C43.403,40 44.671,39.77 46,40L46,56C45,56 43.362,56 42,56C35.741,56 31,60.413 31,67C31,73.579 36.741,80 43,80C49.251,80 54,74.579 54,68L54,10L68.001,10C68.001,21.033 76.508,29.975 87,29.975L87,44"
+                    android:strokeWidth="1"
+                    android:fillColor="#13F7EB"
+                    android:fillType="nonZero"
+                    android:strokeColor="#00000000"/>
+            </group>
+        </vector>
+
+    </foreground>
+</adaptive-icon>

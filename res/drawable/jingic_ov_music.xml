@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+  <background>
+    <vector
+        android:width="108dp"
+        android:height="108dp"
+        android:viewportWidth="108"
+        android:viewportHeight="108">
+      <path
+          android:fillType="evenOdd"
+          android:pathData="M0,0h108v108h-108z"
+          android:strokeWidth="1"
+          android:strokeColor="#00000000">
+        <aapt:attr name="android:fillColor">
+          <gradient
+              android:endX="108"
+              android:endY="108"
+              android:startX="13.359375"
+              android:startY="0"
+              android:type="linear">
+            <item
+                android:color="#FFF29656"
+                android:offset="0" />
+            <item
+                android:color="#FFCB3641"
+                android:offset="1" />
+          </gradient>
+        </aapt:attr>
+      </path>
+    </vector>
+  </background>
+  <foreground>
+    <vector xmlns:android="http://schemas.android.com/apk/res/android"
+        android:width="108dp"
+        android:height="108dp"
+        android:viewportWidth="108"
+        android:viewportHeight="108">
+      <group
+          android:pivotX="54"
+          android:pivotY="54"
+          android:scaleX=".68"
+          android:scaleY=".68">
+
+        <path
+            android:fillColor="#FFFFFF"
+            android:fillType="evenOdd"
+            android:pathData="M77,72C76.952,75.822 74.774,81.075 69,83C62.894,85.036 55.794,83.431 54,79C52.206,74.569 54.044,68.646 60,66C64.255,64.11 68.434,65.04 71.098,65.893C71.692,66.083 72,64.619 72,64L72,38C72,36.633 70.352,34.73 69,35L44,40C42.974,40.205 42,41.962 42,43L42,79C41.978,82.836 40.67,87.664 34,90C27.915,92.132 20.794,89.431 19,85C17.206,80.569 18.94,74.243 25,72C29.779,70.232 33.597,71.449 36.261,72.303C36.855,72.493 37,70.619 37,70L37,30C37,28.213 39.233,25.353 41,25L72,19C74.359,18.528 77,20.615 77,23L77,72Z"
+            android:strokeWidth="1"
+            android:strokeColor="#00000000" />
+      </group>
+    </vector>
+
+  </foreground>
+</adaptive-icon>

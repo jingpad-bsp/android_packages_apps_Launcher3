@@ -32,7 +32,7 @@ import androidx.annotation.VisibleForTesting;
 
 /**
  * One dimensional scroll/drag/swipe gesture detector.
- *
+ * <p>
  * Definition of swipe is different from android system in that this detector handles
  * 'swipe to dismiss', 'swiping up/down a container' but also keeps scrolling state before
  * swipe action happens
@@ -68,7 +68,7 @@ public class SwipeDetector {
     public static abstract class Direction {
 
         abstract float getDisplacement(MotionEvent ev, int pointerIndex, PointF refPoint,
-                boolean isRtl);
+                                       boolean isRtl);
 
         /**
          * Distance in pixels a touch can wander before we think the user is scrolling.
@@ -199,6 +199,7 @@ public class SwipeDetector {
     public int getDownY() {
         return (int) mDownPos.y;
     }
+
     /**
      * There's no touch and there's no animation.
      */
@@ -251,7 +252,7 @@ public class SwipeDetector {
 
     @VisibleForTesting
     protected SwipeDetector(@NonNull ViewConfiguration config, @NonNull Listener l,
-            @NonNull Direction dir, boolean isRtl) {
+                            @NonNull Direction dir, boolean isRtl) {
         mListener = l;
         mDir = dir;
         mIsRtl = isRtl;
@@ -270,6 +271,8 @@ public class SwipeDetector {
 
     private boolean shouldScrollStart(MotionEvent ev, int pointerIndex) {
         // reject cases where the angle or slop condition is not met.
+
+
         if (Math.max(mDir.getActiveTouchSlop(ev, pointerIndex, mDownPos), mTouchSlop)
                 > Math.abs(mDisplacement)) {
             return false;
@@ -305,7 +308,18 @@ public class SwipeDetector {
                     setState(ScrollState.DRAGGING);
                 }
                 break;
-            //case MotionEvent.ACTION_POINTER_DOWN:
+            case MotionEvent.ACTION_POINTER_DOWN:
+                if (ev.getSource() == 8194 && ev.getAction() == 517) {//触控板三指事件，记录滑动事件的开始
+                    mActivePointerId = ev.getPointerId(0);
+                    mDownPos.set(ev.getX(ev.findPointerIndex(mActivePointerId)), ev.getY(ev.findPointerIndex(mActivePointerId)));
+                    mLastPos.set(mDownPos);
+                    mLastDisplacement = 0;
+                    mDisplacement = 0;
+                    if (mState == ScrollState.SETTLING && mIgnoreSlopWhenSettling) {
+                        setState(ScrollState.DRAGGING);
+                    }
+                }
+                break;
             case MotionEvent.ACTION_POINTER_UP:
                 int ptrIdx = ev.getActionIndex();
                 int ptrId = ev.getPointerId(ptrIdx);

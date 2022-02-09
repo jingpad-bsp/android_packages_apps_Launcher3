@@ -33,6 +33,7 @@ import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 import android.widget.Toast;
 
+import com.android.launcher3.AbstractFloatingView;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
@@ -162,8 +163,8 @@ public class OptionsPopupView extends ArrowPopup
             options.add(new OptionItem(R.string.widget_button_text, R.drawable.ic_widget,
                     ControlType.WIDGETS_BUTTON, OptionsPopupView::onWidgetsClicked));
         }
-        options.add(new OptionItem(R.string.settings_button_text, R.drawable.ic_setting,
-                ControlType.SETTINGS_BUTTON, OptionsPopupView::startSettings));
+//        options.add(new OptionItem(R.string.settings_button_text, R.drawable.ic_setting,
+//                ControlType.SETTINGS_BUTTON, OptionsPopupView::startSettings));
 
         show(launcher, target, options);
     }
@@ -176,10 +177,11 @@ public class OptionsPopupView extends ArrowPopup
         if (launcher.getPackageManager().isSafeMode()) {
             Toast.makeText(launcher, R.string.safemode_widget_error, Toast.LENGTH_SHORT).show();
             return false;
-        } else {
+        } else if (!(AbstractFloatingView.getTopOpenView(launcher) instanceof WidgetsFullSheet)) {
             WidgetsFullSheet.show(launcher, true /* animated */);
             return true;
         }
+        return false;
     }
 
     public static boolean startSettings(View view) {

@@ -43,12 +43,29 @@ public class WidgetsDiffReporter {
         mListener = listener;
     }
 
+    private String[] filterPackages = {"com.android.music","com.jingtech.hdbrowser.stable",
+    "com.android.calendar","com.android.settings","com.android.contacts","com.android.gallery3d",
+            "com.android.messaging"};
     public void process(ArrayList<WidgetListRowEntry> currentEntries,
             ArrayList<WidgetListRowEntry> newEntries, WidgetListRowEntryComparator comparator) {
         if (DEBUG) {
             Log.d(TAG, "process oldEntries#=" + currentEntries.size()
                     + " newEntries#=" + newEntries.size());
         }
+        ArrayList<WidgetListRowEntry> filterList = new ArrayList<WidgetListRowEntry>(newEntries.size());
+        boolean find = false;
+        for (int i = 0; i < newEntries.size(); i++) {
+            find = false;
+            for (int j = 0; j < filterPackages.length; j++) {
+                if (filterPackages[j].equals(newEntries.get(i).pkgItem.packageName)) {
+                    find = true;
+                    break;
+                }
+            }
+            if (!find) filterList.add(newEntries.get(i));
+        }
+        newEntries.clear();
+        newEntries.addAll(filterList);
         // Early exit if either of the list is empty
         if (currentEntries.isEmpty() || newEntries.isEmpty()) {
             // Skip if both list are empty.
@@ -64,8 +81,10 @@ public class WidgetsDiffReporter {
         }
         ArrayList<WidgetListRowEntry> orgEntries =
                 (ArrayList<WidgetListRowEntry>) currentEntries.clone();
+        ArrayList<WidgetListRowEntry> newEntriesClone =
+                (ArrayList<WidgetListRowEntry>) newEntries.clone();
         Iterator<WidgetListRowEntry> orgIter = orgEntries.iterator();
-        Iterator<WidgetListRowEntry> newIter = newEntries.iterator();
+        Iterator<WidgetListRowEntry> newIter = newEntriesClone.iterator();
 
         WidgetListRowEntry orgRowEntry = orgIter.next();
         WidgetListRowEntry newRowEntry = newIter.next();

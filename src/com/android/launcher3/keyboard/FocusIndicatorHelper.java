@@ -155,7 +155,7 @@ public abstract class FocusIndicatorHelper implements
 
     @Override
     public void onFocusChange(View v, boolean hasFocus) {
-        if (hasFocus) {
+        if (false && hasFocus) {
             endCurrentAnimation();
 
             if (mAlpha > MIN_VISIBLE_ALPHA) {

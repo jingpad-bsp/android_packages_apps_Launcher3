@@ -28,6 +28,7 @@ import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.animation.Interpolator;
 
@@ -48,11 +49,13 @@ import com.android.launcher3.userevent.nano.LauncherLogProto;
 import com.android.launcher3.userevent.nano.LauncherLogProto.Action.Touch;
 import com.android.launcher3.util.TouchController;
 import com.android.quickstep.views.RecentsView;
+import com.sprd.ext.LogUtils;
 
 /**
  * Handles swiping up on the nav bar to go home from launcher, e.g. overview or all apps.
  */
 public class NavBarToHomeTouchController implements TouchController, SwipeDetector.Listener {
+    private static final String TAG = "NavBarToHomeTouchController";
 
     private static final Interpolator PULLBACK_INTERPOLATOR = DEACCEL_3;
 
@@ -106,6 +109,14 @@ public class NavBarToHomeTouchController implements TouchController, SwipeDetect
 
     @Override
     public final boolean onControllerTouchEvent(MotionEvent ev) {
+        if (mStartState == ALL_APPS && mEndState == NORMAL
+                && mLauncher.getStateManager().isInTransition()){
+            if (LogUtils.DEBUG_ALL) {
+                LogUtils.d(TAG, "Launcher state is changed from ALL_APPS to NORMAL, do not drag.");
+            }
+            clearState();
+            return false;
+        }
         return mSwipeDetector.onTouchEvent(ev);
     }
 

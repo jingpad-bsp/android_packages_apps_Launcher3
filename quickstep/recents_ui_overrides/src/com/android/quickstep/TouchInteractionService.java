@@ -44,6 +44,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Point;
+import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.hardware.display.DisplayManager;
@@ -279,6 +280,7 @@ public class TouchInteractionService extends Service implements
 
     private Region mExclusionRegion;
     private SystemGestureExclusionListenerCompat mExclusionListener;
+    private PointF downPoint = new PointF();
 
     @Override
     public void onCreate() {
@@ -287,7 +289,7 @@ public class TouchInteractionService extends Service implements
         // Initialize anything here that is needed in direct boot mode.
         // Everything else should be initialized in initWhenUserUnlocked() below.
         mMainChoreographer = Choreographer.getInstance();
-        mAM = ActivityManagerWrapper.getInstance();
+            mAM = ActivityManagerWrapper.getInstance();
 
         if (UserManagerCompat.getInstance(this).isUserUnlocked(Process.myUserHandle())) {
             initWhenUserUnlocked();
@@ -376,7 +378,7 @@ public class TouchInteractionService extends Service implements
         } else {
             mAssistantLeftRegion.setEmpty();
             mAssistantRightRegion.setEmpty();
-            switch (defaultDisplay.getRotation()) {
+            /*switch (defaultDisplay.getRotation()) {
                 case Surface.ROTATION_90:
                     mSwipeTouchRegion.left = mSwipeTouchRegion.right
                             - getNavbarSize(ResourceUtils.NAVBAR_LANDSCAPE_LEFT_RIGHT_SIZE);
@@ -388,7 +390,9 @@ public class TouchInteractionService extends Service implements
                 default:
                     mSwipeTouchRegion.top = mSwipeTouchRegion.bottom
                             - getNavbarSize(ResourceUtils.NAVBAR_BOTTOM_GESTURE_SIZE);
-            }
+            }*/
+            mSwipeTouchRegion.top = mSwipeTouchRegion.bottom
+                    - getNavbarSize(ResourceUtils.NAVBAR_BOTTOM_GESTURE_SIZE);
         }
     }
 
@@ -501,17 +505,45 @@ public class TouchInteractionService extends Service implements
         return mMyBinder;
     }
 
+    private boolean ignoreInput = false;
+    private float ignoreRegion = 0.15f;
     private void onInputEvent(InputEvent ev) {
         if (!(ev instanceof MotionEvent)) {
             Log.e(TAG, "Unknown event " + ev);
             return;
         }
         MotionEvent event = (MotionEvent) ev;
+        boolean targ = false;//触控板三指事件--标记
+        if(event.getSource() == 8194&&event.getAction() == 517){//只判断三指操作
+            targ = true;
+        }
+
+        int ac = event.getActionMasked();
+        String as = "0-DOWN";
+        if (MotionEvent.ACTION_MOVE == ac) {
+            as = "0-MOVE";
+        } else if (MotionEvent.ACTION_UP == ac) {
+            as = "0-UP";
+        } else if (MotionEvent.ACTION_POINTER_DOWN == ac) {
+            as = "p-DOWN";
+        } else if (MotionEvent.ACTION_POINTER_UP == ac) {
+            as = "p-UP";
+        }
+//            Log.d("arm", String.format("%s %d %d %.2f %.2f", as,event.getPointerCount(), event.getEventTime() - event.getDownTime(),
+//                event.getX(), event.getY()));
         TOUCH_INTERACTION_LOG.addLog("onMotionEvent", event.getActionMasked());
-        if (event.getAction() == ACTION_DOWN) {
-            if (mSwipeTouchRegion.contains(event.getX(), event.getY())) {
+        if (event.getActionMasked() == ACTION_DOWN||targ) {
+            downPoint.set(event.getX(), event.getY());
+            int width = getResources().getDisplayMetrics().widthPixels;
+            if (event.getX() < width * ignoreRegion || event.getX() > width * (1 - ignoreRegion)) {
+                ignoreInput = true;
+            }else {
+                ignoreInput = false;
+            }
+            //根据down时候的系统状态和实时变化的mSwipeTouchRegion所包含的手势导航的有效位置 来分配事件消费者
+            if (mSwipeTouchRegion.contains(event.getX(), event.getY())||targ) {//触控板三指事件：增加targ标志，使触控板三指事件可以进入相应事件流程，如，上滑进入任务列表
                 boolean useSharedState = mConsumer.useSharedSwipeState();
-                mConsumer.onConsumerAboutToBeSwitched();
+                mConsumer.onConsumerAboutToBeSwitched();//分配事件消费者之前，处之前的动画状态：reset或者cancel
                 mConsumer = newConsumer(useSharedState, event);
                 TOUCH_INTERACTION_LOG.addLog("setInputConsumer", mConsumer.getType());
                 mUncheckedConsumer = mConsumer;
@@ -528,7 +560,13 @@ public class TouchInteractionService extends Service implements
                 mUncheckedConsumer = InputConsumer.NO_OP;
             }
         }
+        if (ignoreInput || event.getEventTime() - event.getDownTime() < 60) {
+            if(event.getSource()!= 8194){//触控板三指事件，触控板操作时，不做此限制
+                event.setLocation(downPoint.x, downPoint.y);
+            }
+        }
         mUncheckedConsumer.onMotionEvent(event);
+//        Log.d("arm", "consumer: " + mUncheckedConsumer);
     }
 
     private boolean validSystemUiFlags() {
@@ -708,8 +746,10 @@ public class TouchInteractionService extends Service implements
             pw.println("  assistantAvailable=" + mAssistantAvailable);
             pw.println("  assistantDisabled="
                     + QuickStepContract.isAssistantGestureDisabled(mSystemUiStateFlags));
-            pw.println("  resumed="
-                    + mOverviewComponentObserver.getActivityControlHelper().isResumed());
+            if (null != mOverviewComponentObserver) {
+                pw.println("  resumed="
+                        + mOverviewComponentObserver.getActivityControlHelper().isResumed());
+            }
             pw.println("  useSharedState=" + mConsumer.useSharedSwipeState());
             if (mConsumer.useSharedSwipeState()) {
                 sSwipeSharedState.dump("    ", pw);

@@ -122,13 +122,13 @@ public class WidgetsFullSheet extends BaseWidgetSheet
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int widthUsed;
-        if (mInsets.bottom > 0) {
-            widthUsed = 0;
-        } else {
+        int widthUsed = 0;
+        boolean isVerticalBarLayout = mLauncher.getDeviceProfile().isVerticalBarLayout();
+        if (isVerticalBarLayout) {
             Rect padding = mLauncher.getDeviceProfile().workspacePadding;
-            widthUsed = Math.max(padding.left + padding.right,
-                    2 * (mInsets.left + mInsets.right));
+            widthUsed = Math.max(padding.left + padding.right, 2 * (mInsets.left + mInsets.right));
+        } else if (mInsets.bottom > 0) {
+            widthUsed = mInsets.left + mInsets.right;
         }
 
         int heightUsed = mInsets.top + mLauncher.getDeviceProfile().edgeMarginPx;

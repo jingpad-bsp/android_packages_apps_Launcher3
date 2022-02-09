@@ -43,12 +43,15 @@ import android.view.animation.Interpolator;
 
 import com.android.launcher3.anim.AnimatorSetBuilder;
 import com.android.launcher3.states.SpringLoadedState;
+import com.android.launcher3.testing.TestProtocol;
 import com.android.launcher3.uioverrides.UiFactory;
 import com.android.launcher3.uioverrides.states.AllAppsState;
 import com.android.launcher3.uioverrides.states.OverviewState;
 import com.android.launcher3.userevent.nano.LauncherLogProto.ContainerType;
 
 import java.util.Arrays;
+
+import androidx.annotation.NonNull;
 
 
 /**
@@ -80,6 +83,8 @@ public class LauncherState {
     protected static final int FLAG_OVERVIEW_UI = 1 << 7;
     protected static final int FLAG_HIDE_BACK_BUTTON = 1 << 8;
     protected static final int FLAG_HAS_SYS_UI_SCRIM = 1 << 9;
+    // Flag to indicate that State animation can not be interrupted.
+    protected static final int FLAG_DISABLE_INTERRUPT = 1 << 10;
 
     protected static final PageAlphaProvider DEFAULT_ALPHA_PROVIDER =
             new PageAlphaProvider(ACCEL_2) {
@@ -163,6 +168,11 @@ public class LauncherState {
     public final boolean disableInteraction;
 
     /**
+     * True if launcher can not be interrupt in this state;
+     */
+    public final boolean disableInterrupt;
+
+    /**
      * True if the state has overview panel visible.
      */
     public final boolean overviewUi;
@@ -188,6 +198,7 @@ public class LauncherState {
         this.workspaceIconsCanBeDragged = (flags & FLAG_WORKSPACE_ICONS_CAN_BE_DRAGGED) != 0;
         this.disablePageClipping = (flags & FLAG_DISABLE_PAGE_CLIPPING) != 0;
         this.disableInteraction = (flags & FLAG_DISABLE_INTERACTION) != 0;
+        this.disableInterrupt = (flags & FLAG_DISABLE_INTERRUPT) != 0;
         this.overviewUi = (flags & FLAG_OVERVIEW_UI) != 0;
         this.hideBackButton = (flags & FLAG_HIDE_BACK_BUTTON) != 0;
         this.hasSysUiScrim = (flags & FLAG_HAS_SYS_UI_SCRIM) != 0;
@@ -270,6 +281,8 @@ public class LauncherState {
      */
     public void onStateTransitionEnd(Launcher launcher) {
         if (this == NORMAL) {
+            AbstractFloatingView.closeOpenViews(launcher,
+                    false, AbstractFloatingView.TYPE_TASK_MENU);
             // Clear any rotation locks when going to normal state
             launcher.getRotationHelper().setCurrentStateRequest(REQUEST_NONE);
         }
@@ -304,7 +317,7 @@ public class LauncherState {
             if (isWorkspaceVisible) {
                 CellLayout currentChild = (CellLayout) workspace.getChildAt(
                         workspace.getCurrentPage());
-                isWorkspaceVisible = currentChild.getVisibility() == VISIBLE
+                isWorkspaceVisible = null != currentChild && currentChild.getVisibility() == VISIBLE
                         && currentChild.getShortcutsAndWidgets().getAlpha() > 0;
             }
             if (!isWorkspaceVisible) {
@@ -348,5 +361,12 @@ public class LauncherState {
             this.translationX = translationX;
             this.translationY = translationY;
         }
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        String stateOrdinal = TestProtocol.stateOrdinalToString(ordinal);
+        return stateOrdinal != null ? stateOrdinal : Integer.toString(ordinal);
     }
 }

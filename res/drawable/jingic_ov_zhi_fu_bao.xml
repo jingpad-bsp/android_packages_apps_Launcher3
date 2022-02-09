@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <background>
+        <shape android:shape="rectangle">
+            <size
+                android:width="108dp"
+                android:height="108dp" />
+            <gradient
+                android:angle="270"
+                android:endColor="#FFF92800"
+                android:startColor="#FFF92800" />
+        </shape>
+    </background>
+    <foreground>
+        <vector xmlns:android="http://schemas.android.com/apk/res/android"
+            android:width="108dp"
+            android:height="108dp"
+            android:viewportWidth="108"
+            android:viewportHeight="108">
+            <group
+                android:pivotX="54"
+                android:pivotY="54"
+                android:scaleX=".68"
+                android:scaleY=".68">
+                <path
+                    android:pathData="M0,0l108,0l0,108l-108,0z"
+                    android:strokeWidth="1"
+                    android:fillColor="#02A0EC"
+                    android:fillType="evenOdd"
+                    android:strokeColor="#00000000"/>
+                <path
+                    android:pathData="M59.935,16L59.935,27.999L85.968,28L86.131,32.965L59.935,32.979L59.935,40.999L80.967,41L80.848,41.512C77.259,56.751 72.559,61.742 71.968,63C87.246,68.715 99.091,72.675 107.504,74.879L107.968,75L107.968,92C86.007,82.722 71.674,76.389 64.968,73C63.892,74.585 62.682,78.339 48.968,87C31.518,96.182 10.76,91.154 7.968,77C5.175,62.846 16.165,54.1 27.968,53C35.631,52.062 48.427,55.764 55.626,58.141L56.532,58.443C59.248,59.356 60.965,60.008 60.968,60C61.689,59.41 63.957,54.569 67.769,45.474L67.968,45L25.968,45L25.968,41L46.967,40.999L46.968,32.985L20.968,33L20.968,28L46.968,27.999L46.968,17C46.968,16.448 47.415,16 47.968,16L59.935,16ZM11.88,71.699C11.88,82.509 24.544,84.439 29.953,84.439C39.049,84.192 47.771,78.819 56.12,68.318C45.844,63.247 37.56,60.508 31.267,60.102C23.286,59.287 11.973,62.854 11.88,71.699Z"
+                    android:strokeWidth="1"
+                    android:fillColor="#FFFFFF"
+                    android:fillType="evenOdd"
+                    android:strokeColor="#00000000"/>
+            </group>
+        </vector>
+
+    </foreground>
+</adaptive-icon>

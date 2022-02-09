@@ -22,6 +22,8 @@ import android.content.Context;
  * Defines a set of flags used to control various launcher behaviors
  */
 public final class FeatureFlags extends BaseFlags {
+    public static final boolean QSB_ON_FIRST_SCREEN = false;
+
     private FeatureFlags() {
         // Prevent instantiation
     }

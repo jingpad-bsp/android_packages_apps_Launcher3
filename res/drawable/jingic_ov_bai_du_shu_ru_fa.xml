@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <background>
+        <shape android:shape="rectangle">
+            <size
+                android:width="108dp"
+                android:height="108dp" />
+            <gradient
+                android:angle="270"
+                android:endColor="#FFFFFF"
+                android:startColor="#FFFFFF" />
+        </shape>
+    </background>
+    <foreground>
+        <vector xmlns:android="http://schemas.android.com/apk/res/android"
+            android:width="108dp"
+            android:height="108dp"
+            android:viewportWidth="108"
+            android:viewportHeight="108">
+            <group
+                android:pivotX="54"
+                android:pivotY="54"
+                android:scaleX=".68"
+                android:scaleY=".68">
+
+                <path
+                    android:pathData="M54,45C57.777,45 60.902,46.501 64.911,52.176C68.92,57.852 69.24,58.239 76.095,63.322C82.949,68.405 84.667,72.583 84,79C83.333,85.417 77.125,91.239 69.036,89.799C60.946,88.36 58.49,88 54,88C49.51,88 44.653,89.592 39,90C33.347,90.408 26.011,87.154 25,78C23.989,68.846 29.629,64.987 31.378,63.84C33.126,62.694 38.956,58.511 43.128,52.176C47.3,45.842 50.223,45 54,45ZM61,65L55,65L55,79L55.006,79.225C55.119,81.666 56.688,82.923 59.712,82.997L60,83L72,83L72,65L66,65L66,78L63,78L62.922,78.001C62.322,78.015 61.111,78.152 61.007,77.145L61,77L61,65ZM52,57L47,57L47,65L40.933,65C39.288,65.016 32,65.647 32,74C32,79.547 35.057,82.54 41.171,82.979L41.507,83L52,83L52,57ZM47,70L47,78L42,78C39.333,77.995 38,76.662 38,74C38,71.419 39.254,70.087 41.761,70.004L42,70L47,70ZM80,36C87.392,36 88,42.799 88,45.39L88,45.501C87.988,48.215 87.527,56.451 80,56C74.912,55.695 72.245,52.362 72,46C72.406,39.333 75.072,36 80,36ZM28,35C31.46,35 37,38.145 37,46C37,53.855 32.283,56 29,56C25.717,56 18.744,53.471 20,45C21.256,36.529 24.54,35 28,35ZM64.281,17.978C70.457,17.62 73,23.533 73,28C73,32.467 70.585,40.184 64,40C57.415,39.816 56.269,32.708 56,29C55.731,25.292 58.104,18.335 64.281,17.978ZM43.546,17.978C51.159,17.978 52,26.657 52,28C52,29.343 52.915,40 44,40C38.057,40 35.057,36.333 35,29C35.622,21.652 38.47,17.978 43.546,17.978Z"
+                    android:strokeWidth="1"
+                    android:fillColor="#3C77F8"
+                    android:fillType="evenOdd"
+                    android:strokeColor="#00000000"/>
+            </group>
+        </vector>
+
+    </foreground>
+</adaptive-icon>

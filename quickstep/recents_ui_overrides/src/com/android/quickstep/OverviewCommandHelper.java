@@ -25,6 +25,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.ViewConfiguration;
 
 import com.android.launcher3.BaseDraggingActivity;

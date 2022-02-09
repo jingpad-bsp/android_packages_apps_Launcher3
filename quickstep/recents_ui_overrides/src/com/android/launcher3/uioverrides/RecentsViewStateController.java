@@ -24,6 +24,7 @@ import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.os.Build;
 import android.util.FloatProperty;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -63,7 +64,6 @@ public final class RecentsViewStateController extends
     void setStateWithAnimationInternal(@NonNull final LauncherState toState,
             @NonNull AnimatorSetBuilder builder, @NonNull AnimationConfig config) {
         super.setStateWithAnimationInternal(toState, builder, config);
-
         if (!toState.overviewUi) {
             builder.addOnFinishRunnable(mRecentsView::resetTaskVisuals);
         }
@@ -77,6 +77,7 @@ public final class RecentsViewStateController extends
             updateAnim.setDuration(config.duration);
             builder.play(updateAnim);
             mRecentsView.updateEmptyMessage();
+            mRecentsView.resetTaskVisualsIfNeeded();
         }
 
         PropertySetter propertySetter = config.getPropertySetter(builder);

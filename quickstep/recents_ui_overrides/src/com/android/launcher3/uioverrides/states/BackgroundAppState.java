@@ -32,7 +32,7 @@ public class BackgroundAppState extends OverviewState {
 
     private static final int STATE_FLAGS =
             FLAG_DISABLE_RESTORE | FLAG_OVERVIEW_UI | FLAG_DISABLE_ACCESSIBILITY
-                    | FLAG_DISABLE_INTERACTION;
+                    | FLAG_DISABLE_INTERACTION | FLAG_DISABLE_INTERRUPT;
 
     public BackgroundAppState(int id) {
         this(id, LauncherLogProto.ContainerType.TASKSWITCHER);
@@ -68,8 +68,11 @@ public class BackgroundAppState extends OverviewState {
         if (taskCount == 0) {
             return super.getOverviewScaleAndTranslation(launcher);
         }
-        TaskView dummyTask = recentsView.getTaskViewAt(Math.max(taskCount - 1,
+        TaskView dummyTask = recentsView.getTaskViewAt(Math.min(taskCount - 1,
                 recentsView.getCurrentPage()));
+        if (null == dummyTask) {
+            return super.getOverviewScaleAndTranslation(launcher);
+        }
         return recentsView.getTempClipAnimationHelper().updateForFullscreenOverview(dummyTask)
                 .getScaleAndTranslation();
     }

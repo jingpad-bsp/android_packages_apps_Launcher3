@@ -41,11 +41,11 @@ public class NavBarPosition {
     }
 
     public boolean isRightEdge() {
-        return mMode != NO_BUTTON && mDisplayRotation == Surface.ROTATION_90;
+        return mMode != NO_BUTTON && mDisplayRotation == Surface.ROTATION_90&&false;
     }
 
     public boolean isLeftEdge() {
-        return mMode != NO_BUTTON && mDisplayRotation == Surface.ROTATION_270;
+        return mMode != NO_BUTTON && mDisplayRotation == Surface.ROTATION_270&&false;
     }
 
     public RotationMode getRotationMode() {

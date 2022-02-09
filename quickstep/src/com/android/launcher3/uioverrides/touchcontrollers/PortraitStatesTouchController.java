@@ -30,6 +30,7 @@ import static com.android.systemui.shared.system.QuickStepContract.SYSUI_STATE_O
 
 import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.animation.Interpolator;
 
@@ -52,6 +53,7 @@ import com.android.quickstep.RecentsModel;
 import com.android.quickstep.TouchInteractionService;
 import com.android.quickstep.util.LayoutUtils;
 import com.android.systemui.shared.system.QuickStepContract;
+import com.sprd.ext.multimode.MultiModeController;
 
 /**
  * Touch controller for handling various state transitions in portrait UI.
@@ -85,8 +87,20 @@ public class PortraitStatesTouchController extends AbstractStateChangeTouchContr
         mAllowDragToOverview = allowDragToOverview;
     }
 
+    private boolean touch_pad_three_started = false;
+
     @Override
     protected boolean canInterceptTouch(MotionEvent ev) {
+        if (ev.getSource() == 8194 && ev.getAction() == 517) {
+            if (touch_pad_three_started) {
+                return true;
+            } else {
+                touch_pad_three_started = true;
+            }
+        }
+        if (ev.getAction() == MotionEvent.ACTION_UP || ev.getAction() == MotionEvent.ACTION_CANCEL) {
+            touch_pad_three_started = false;
+        }
         if (mCurrentAnimation != null) {
             if (mFinishFastOnSecondTouch) {
                 // TODO: Animate to finish instead.
@@ -124,6 +138,7 @@ public class PortraitStatesTouchController extends AbstractStateChangeTouchContr
             }
         }
         if (AbstractFloatingView.getTopOpenViewWithType(mLauncher, TYPE_ACCESSIBLE) != null) {
+
             return false;
         }
         return true;
@@ -180,7 +195,7 @@ public class PortraitStatesTouchController extends AbstractStateChangeTouchContr
 
     @Override
     protected AnimatorSetBuilder getAnimatorSetBuilderForStates(LauncherState fromState,
-            LauncherState toState) {
+                                                                LauncherState toState) {
         AnimatorSetBuilder builder = new AnimatorSetBuilder();
         if (fromState == NORMAL && toState == OVERVIEW) {
             builder = getNormalToOverviewAnimation();
@@ -253,21 +268,21 @@ public class PortraitStatesTouchController extends AbstractStateChangeTouchContr
 
     @Override
     protected void updateSwipeCompleteAnimation(ValueAnimator animator, long expectedDuration,
-            LauncherState targetState, float velocity, boolean isFling) {
+                                                LauncherState targetState, float velocity, boolean isFling) {
         super.updateSwipeCompleteAnimation(animator, expectedDuration, targetState,
                 velocity, isFling);
         handleFirstSwipeToOverview(animator, expectedDuration, targetState, velocity, isFling);
     }
 
     private void handleFirstSwipeToOverview(final ValueAnimator animator,
-            final long expectedDuration, final LauncherState targetState, final float velocity,
-            final boolean isFling) {
+                                            final long expectedDuration, final LauncherState targetState, final float velocity,
+                                            final boolean isFling) {
         if (QUICKSTEP_SPRINGS.get() && mFromState == OVERVIEW && mToState == ALL_APPS
                 && targetState == OVERVIEW) {
             mFinishFastOnSecondTouch = true;
-        } else  if (mFromState == NORMAL && mToState == OVERVIEW && targetState == OVERVIEW) {
+        } else if (mFromState == NORMAL && mToState == OVERVIEW && targetState == OVERVIEW) {
             mFinishFastOnSecondTouch = true;
-            if (isFling && expectedDuration != 0) {
+            if (isFling && expectedDuration != 0 && !MultiModeController.isSingleLayerMode()) {
                 // Update all apps interpolator to add a bit of overshoot starting from currFraction
                 final float currFraction = mCurrentAnimation.getProgressFraction();
                 mAllAppsInterpolatorWrapper.baseInterpolator = Interpolators.clampToProgress(
@@ -292,10 +307,14 @@ public class PortraitStatesTouchController extends AbstractStateChangeTouchContr
      * Whether the motion event is over the hotseat.
      *
      * @param launcher the launcher activity
-     * @param ev the event to check
+     * @param ev       the event to check
      * @return true if the event is over the hotseat
      */
     static boolean isTouchOverHotseat(Launcher launcher, MotionEvent ev) {
+//        if (ev.getSource() == 8194 && ev.getAction() == 517) {//触摸板三指down事件，直接判定在Hotseat区域内
+//            return true;
+//        }
+
         DeviceProfile dp = launcher.getDeviceProfile();
         int hotseatHeight = dp.hotseatBarSizePx + dp.getInsets().bottom;
         return (ev.getY() >= (launcher.getDragLayer().getHeight() - hotseatHeight));

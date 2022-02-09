@@ -53,11 +53,11 @@ import com.android.quickstep.util.TaskCornerRadius;
 import com.android.systemui.shared.recents.model.Task;
 import com.android.systemui.shared.recents.model.ThumbnailData;
 
+
 /**
  * A task in the Recents view.
  */
 public class TaskThumbnailView extends View {
-
     private final static ColorMatrix COLOR_MATRIX = new ColorMatrix();
     private final static ColorMatrix SATURATION_COLOR_MATRIX = new ColorMatrix();
     private final static RectF EMPTY_RECT_F = new RectF();
@@ -86,6 +86,7 @@ public class TaskThumbnailView extends View {
     private final Matrix mMatrix = new Matrix();
 
     private float mClipBottom = -1;
+    private float mClipRight=-1;
     // Contains the portion of the thumbnail that is clipped when fullscreen progress = 0.
     private RectF mClippedInsets = new RectF();
     private TaskView.FullscreenDrawParams mFullscreenParams;
@@ -244,10 +245,17 @@ public class TaskThumbnailView extends View {
 
         if (mClipBottom > 0) {
             canvas.save();
+            canvas.translate(0,(height-mClipBottom)/2);
             canvas.clipRect(x, y, width, mClipBottom);
             canvas.drawRoundRect(x, y, width, height, cornerRadius, cornerRadius, mPaint);
             canvas.restore();
-        } else {
+        } else if(mClipRight>0){
+            canvas.save();
+            canvas.translate((width-mClipRight)/2,0);
+            canvas.clipRect(x, y, mClipRight, height);
+            canvas.drawRoundRect(x, y, width, height, cornerRadius, cornerRadius, mPaint);
+            canvas.restore();
+        }else{
             canvas.drawRoundRect(x, y, width, height, cornerRadius, cornerRadius, mPaint);
         }
     }
@@ -289,6 +297,7 @@ public class TaskThumbnailView extends View {
     private void updateThumbnailMatrix() {
         boolean isRotated = false;
         mClipBottom = -1;
+        mClipRight=-1;
         if (mBitmapShader != null && mThumbnailData != null) {
             float scale = mThumbnailData.scale;
             Rect thumbnailInsets = mThumbnailData.insets;
@@ -296,28 +305,58 @@ public class TaskThumbnailView extends View {
                     (thumbnailInsets.left + thumbnailInsets.right) * scale;
             final float thumbnailHeight = mThumbnailData.thumbnail.getHeight() -
                     (thumbnailInsets.top + thumbnailInsets.bottom) * scale;
-
-            final float thumbnailScale;
+            final float thumbnailXScale;
+            final float thumbnailYScale;
             final DeviceProfile profile = mActivity.getDeviceProfile();
-
+            final Configuration configuration =
+                    getContext().getResources().getConfiguration();
             if (getMeasuredWidth() == 0) {
                 // If we haven't measured , skip the thumbnail drawing and only draw the background
                 // color
-                thumbnailScale = 0f;
+                thumbnailXScale = 0f;
+                thumbnailYScale = 0f;
             } else {
-                final Configuration configuration =
-                        getContext().getResources().getConfiguration();
                 // Rotate the screenshot if not in multi-window mode
                 isRotated = FeatureFlags.OVERVIEW_USE_SCREENSHOT_ORIENTATION &&
                         configuration.orientation != mThumbnailData.orientation &&
                         !mActivity.isInMultiWindowMode() &&
                         mThumbnailData.windowingMode == WINDOWING_MODE_FULLSCREEN;
                 // Scale the screenshot to always fit the width of the card.
-                thumbnailScale = isRotated
-                        ? getMeasuredWidth() / thumbnailHeight
-                        : getMeasuredWidth() / thumbnailWidth;
-            }
+                if(configuration.orientation==1) {
+                    thumbnailXScale = isRotated
+                            ? getMeasuredWidth() / thumbnailHeight
+                            : getMeasuredWidth() / thumbnailWidth;
+                    final float bitmapHeight = Math.max((isRotated ? thumbnailWidth : thumbnailHeight)
+                            * thumbnailXScale, 0);
 
+                    if (Math.abs(bitmapHeight - getMeasuredHeight()) > 0.1f * getMeasuredHeight()) {
+                        if (Math.round(bitmapHeight) < getMeasuredHeight()) {
+                            mClipBottom = bitmapHeight;
+                        }
+                        thumbnailYScale = Math.max(thumbnailXScale, 0);
+                    } else {
+                        thumbnailYScale = isRotated
+                                ? getMeasuredHeight() / thumbnailWidth
+                                : getMeasuredHeight() / thumbnailHeight;
+                    }
+                }else{
+                    thumbnailYScale = isRotated
+                            ? getMeasuredHeight() / thumbnailWidth
+                            : getMeasuredHeight() / thumbnailHeight;
+                    final float bitmapWidth = Math.max((isRotated ? thumbnailHeight : thumbnailWidth)
+                            * thumbnailYScale, 0);
+                    if (Math.abs(bitmapWidth - getMeasuredWidth()) > 0.1f * getMeasuredWidth()) {
+                        if (Math.round(bitmapWidth) < getMeasuredWidth()) {
+                            mClipRight = bitmapWidth;
+                        }
+                        thumbnailXScale = Math.max(thumbnailYScale, 0);
+                    } else {
+                        thumbnailXScale = isRotated
+                                ? getMeasuredWidth() / thumbnailHeight
+                                : getMeasuredWidth() / thumbnailWidth;
+                    }
+                }
+            }
             if (isRotated) {
                 int rotationDir = profile.isVerticalBarLayout() && !profile.isSeascape() ? -1 : 1;
                 mMatrix.setRotate(90 * rotationDir);
@@ -326,7 +365,7 @@ public class TaskThumbnailView extends View {
                 mClippedInsets.offsetTo(newLeftInset * scale, newTopInset * scale);
                 if (rotationDir == -1) {
                     // Crop the right/bottom side of the screenshot rather than left/top
-                    float excessHeight = thumbnailWidth * thumbnailScale - getMeasuredHeight();
+                    float excessHeight = thumbnailWidth * thumbnailYScale - getMeasuredHeight();
                     mClippedInsets.offset(0, excessHeight);
                 }
                 mMatrix.postTranslate(-mClippedInsets.left, -mClippedInsets.top);
@@ -344,25 +383,19 @@ public class TaskThumbnailView extends View {
             final float widthWithInsets;
             final float heightWithInsets;
             if (isRotated) {
-                widthWithInsets = mThumbnailData.thumbnail.getHeight() * thumbnailScale;
-                heightWithInsets = mThumbnailData.thumbnail.getWidth() * thumbnailScale;
+                widthWithInsets = mThumbnailData.thumbnail.getHeight() * thumbnailXScale;
+                heightWithInsets = mThumbnailData.thumbnail.getWidth() * thumbnailYScale;
             } else {
-                widthWithInsets = mThumbnailData.thumbnail.getWidth() * thumbnailScale;
-                heightWithInsets = mThumbnailData.thumbnail.getHeight() * thumbnailScale;
+                widthWithInsets = mThumbnailData.thumbnail.getWidth() * thumbnailXScale;
+                heightWithInsets = mThumbnailData.thumbnail.getHeight() * thumbnailYScale;
             }
-            mClippedInsets.left *= thumbnailScale;
-            mClippedInsets.top *= thumbnailScale;
+            mClippedInsets.left *= thumbnailXScale;
+            mClippedInsets.top *= thumbnailYScale;
             mClippedInsets.right = widthWithInsets - mClippedInsets.left - getMeasuredWidth();
             mClippedInsets.bottom = heightWithInsets - mClippedInsets.top - getMeasuredHeight();
 
-            mMatrix.postScale(thumbnailScale, thumbnailScale);
+            mMatrix.postScale(thumbnailXScale, thumbnailYScale);
             mBitmapShader.setLocalMatrix(mMatrix);
-
-            float bitmapHeight = Math.max((isRotated ? thumbnailWidth : thumbnailHeight)
-                    * thumbnailScale, 0);
-            if (Math.round(bitmapHeight) < getMeasuredHeight()) {
-                mClipBottom = bitmapHeight;
-            }
             mPaint.setShader(mBitmapShader);
         }
 

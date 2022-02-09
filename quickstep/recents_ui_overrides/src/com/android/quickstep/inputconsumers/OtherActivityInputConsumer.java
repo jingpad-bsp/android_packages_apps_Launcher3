@@ -31,6 +31,7 @@ import static com.android.quickstep.TouchInteractionService.TOUCH_INTERACTION_LO
 import static com.android.systemui.shared.system.ActivityManagerWrapper.CLOSE_SYSTEM_WINDOWS_REASON_RECENTS;
 
 import android.annotation.TargetApi;
+import android.app.ActivityManager;
 import android.app.ActivityManager.RunningTaskInfo;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -40,6 +41,7 @@ import android.graphics.RectF;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
@@ -126,7 +128,7 @@ public class OtherActivityInputConsumer extends ContextWrapper implements InputC
         ActivityManagerWrapper.getInstance().cancelRecentsAnimation(
                 true /* restoreHomeStackPosition */);
     };
-
+    private ActivityManager mAm;
     public OtherActivityInputConsumer(Context base, RunningTaskInfo runningTaskInfo,
             RecentsModel recentsModel, Intent homeIntent, ActivityControlHelper activityControl,
             boolean isDeferredDownTarget, OverviewCallbacks overviewCallbacks,
@@ -135,7 +137,7 @@ public class OtherActivityInputConsumer extends ContextWrapper implements InputC
             SwipeSharedState swipeSharedState, InputMonitorCompat inputMonitorCompat,
             RectF swipeTouchRegion, boolean disableHorizontalSwipe) {
         super(base);
-
+        mAm=(ActivityManager) base.getSystemService(Context.ACTIVITY_SERVICE);
         mMainThreadHandler = new Handler(Looper.getMainLooper());
         mRunningTask = runningTaskInfo;
         mRecentsModel = recentsModel;
@@ -166,6 +168,13 @@ public class OtherActivityInputConsumer extends ContextWrapper implements InputC
         mPassedPilferInputSlop = mPaddedWindowMoveSlop = continuingPreviousGesture;
         mDisableHorizontalSwipe = !mPassedPilferInputSlop && disableHorizontalSwipe;
     }
+    public boolean isVideoActivity(){
+        Log.e("OtherActivityInputConsumer","top:"+mAm.getRunningTasks(1).get(0).topActivity.getClassName());
+        if(mAm.getRunningTasks(1).get(0).topActivity.getClassName().contains("MovieActivity")){
+            return true;
+        }
+        return false;
+    }
 
     @Override
     public int getType() {
@@ -184,10 +193,14 @@ public class OtherActivityInputConsumer extends ContextWrapper implements InputC
         if (mVelocityTracker == null) {
             return;
         }
+        if(isVideoActivity()){
+            return ;
+        }
 
         // Proxy events to recents view
         if (mPaddedWindowMoveSlop && mInteractionHandler != null
                 && !mRecentsViewDispatcher.hasConsumer()) {
+            //应用快切的事件处理逻辑传递是在这里设置的				
             mRecentsViewDispatcher.setConsumer(mInteractionHandler.getRecentsViewDispatcher(
                     mNavBarPosition.getRotationMode()));
         }
@@ -220,11 +233,28 @@ public class OtherActivityInputConsumer extends ContextWrapper implements InputC
                 break;
             }
             case ACTION_POINTER_DOWN: {
-                if (!mPassedPilferInputSlop) {
-                    // Cancel interaction in case of multi-touch interaction
-                    int ptrIdx = ev.getActionIndex();
-                    if (!mSwipeTouchRegion.contains(ev.getX(ptrIdx), ev.getY(ptrIdx))) {
-                        forceCancelGesture(ev);
+                //触控板三指事件：事件进入事件处理流程
+                if(ev.getSource() == 8194){
+                    RaceConditionTracker.onEvent(DOWN_EVT, ENTER);
+                    TraceHelper.beginSection("TouchInt");
+                    mActivePointerId = ev.getPointerId(0);
+                    mDownPos.set(ev.getX(), ev.getY());
+                    mLastPos.set(mDownPos);
+
+                    // Start the window animation on down to give more time for launcher to draw if the
+                    // user didn't start the gesture over the back button
+                    if (!mIsDeferredDownTarget) {
+                        startTouchTrackingForWindowAnimation(ev.getEventTime());
+                    }
+
+                    RaceConditionTracker.onEvent(DOWN_EVT, EXIT);
+                }else{
+                    if (!mPassedPilferInputSlop) {
+                        // Cancel interaction in case of multi-touch interaction
+                        int ptrIdx = ev.getActionIndex();
+                        if (!mSwipeTouchRegion.contains(ev.getX(ptrIdx), ev.getY(ptrIdx))) {
+                            forceCancelGesture(ev);
+                        }
                     }
                 }
                 break;
@@ -250,7 +280,6 @@ public class OtherActivityInputConsumer extends ContextWrapper implements InputC
                 mLastPos.set(ev.getX(pointerIndex), ev.getY(pointerIndex));
                 float displacement = getDisplacement(ev);
                 float displacementX = mLastPos.x - mDownPos.x;
-
                 if (!mPaddedWindowMoveSlop) {
                     if (!mIsDeferredDownTarget) {
                         // Normal gesture, ensure we pass the drag slop before we start tracking
@@ -331,7 +360,6 @@ public class OtherActivityInputConsumer extends ContextWrapper implements InputC
 
     private void startTouchTrackingForWindowAnimation(long touchTimeMs) {
         TOUCH_INTERACTION_LOG.addLog("startRecentsAnimation");
-
         RecentsAnimationListenerSet listenerSet = mSwipeSharedState.getActiveListener();
         final WindowTransformSwipeHandler handler = new WindowTransformSwipeHandler(
                 mRunningTask, this, touchTimeMs, mActivityControlHelper,
@@ -402,7 +430,7 @@ public class OtherActivityInputConsumer extends ContextWrapper implements InputC
     }
 
     @Override
-    public void onConsumerAboutToBeSwitched() {
+    public void onConsumerAboutToBeSwitched() {//consumer即将执行切换
         Preconditions.assertUIThread();
         mMainThreadHandler.removeCallbacks(mCancelRecentsAnimationRunnable);
         if (mInteractionHandler != null) {
@@ -425,6 +453,7 @@ public class OtherActivityInputConsumer extends ContextWrapper implements InputC
         Preconditions.assertUIThread();
         removeListener();
         mInteractionHandler = null;
+        mMotionPauseDetector.clear();
         mOnCompleteCallback.accept(this);
     }
 

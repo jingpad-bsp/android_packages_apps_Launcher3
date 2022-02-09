@@ -19,8 +19,12 @@ import static com.android.launcher3.config.FeatureFlags.ENABLE_QUICKSTEP_LIVE_TI
 import static com.android.quickstep.TouchInteractionService.TOUCH_INTERACTION_LOG;
 import static com.android.systemui.shared.system.ActivityManagerWrapper.CLOSE_SYSTEM_WINDOWS_REASON_RECENTS;
 
+import android.app.StatusBarManager;
+import android.graphics.PointF;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.View;
 
 import androidx.annotation.Nullable;
 
@@ -50,20 +54,21 @@ public class OverviewInputConsumer<T extends BaseDraggingActivity>
     private final boolean mStartingInActivityBounds;
     private boolean mTargetHandledTouch;
 
+
     public OverviewInputConsumer(T activity, @Nullable InputMonitorCompat inputMonitor,
-            boolean startingInActivityBounds) {
+                                 boolean startingInActivityBounds) {
         mActivity = activity;
         mInputMonitor = inputMonitor;
         mStartingInActivityBounds = startingInActivityBounds;
 
         mTarget = activity.getDragLayer();
+        mTarget.getLocationOnScreen(mLocationOnScreen);
         if (startingInActivityBounds) {
             mEventReceiver = mTarget::dispatchTouchEvent;
             mProxyTouch = true;
         } else {
             // Only proxy touches to controllers if we are starting touch from nav bar.
             mEventReceiver = mTarget::proxyTouchEvent;
-            mTarget.getLocationOnScreen(mLocationOnScreen);
             mProxyTouch = mTarget.prepareProxyEventStarting();
         }
     }
@@ -90,9 +95,9 @@ public class OverviewInputConsumer<T extends BaseDraggingActivity>
         }
         ev.offsetLocation(-mLocationOnScreen[0], -mLocationOnScreen[1]);
         boolean handled = mEventReceiver.test(ev);
+
         ev.offsetLocation(mLocationOnScreen[0], mLocationOnScreen[1]);
         ev.setEdgeFlags(flags);
-
         if (!mTargetHandledTouch && handled) {
             mTargetHandledTouch = true;
             if (!mStartingInActivityBounds) {

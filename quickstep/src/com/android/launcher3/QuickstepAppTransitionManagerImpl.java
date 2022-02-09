@@ -124,7 +124,7 @@ public abstract class QuickstepAppTransitionManagerImpl extends LauncherAppTrans
     private static final long CROP_DURATION = 375;
     private static final long RADIUS_DURATION = 375;
 
-    public static final int RECENTS_LAUNCH_DURATION = 336;
+    public static final int RECENTS_LAUNCH_DURATION = 136;
     private static final int LAUNCHER_RESUME_START_DELAY = 100;
     private static final int CLOSING_TRANSITION_DURATION_MS = 250;
 
@@ -176,7 +176,9 @@ public abstract class QuickstepAppTransitionManagerImpl extends LauncherAppTrans
         mClosingWindowTransY = res.getDimensionPixelSize(R.dimen.closing_window_trans_y);
 
         mLauncher.addOnDeviceProfileChangeListener(this);
-        registerRemoteAnimations();
+        if (com.sprd.ext.FeatureOption.SPRD_APP_REMOTE_ANIM_SUPPORT.get()) {
+            registerRemoteAnimations();
+        }
     }
 
     @Override

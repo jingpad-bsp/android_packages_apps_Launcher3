@@ -36,6 +36,7 @@ import static com.android.systemui.shared.system.QuickStepContract.SYSUI_STATE_O
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
+import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
@@ -174,5 +175,11 @@ public class FlingAndHoldTouchController extends PortraitStatesTouchController {
             // as that will cause a jump after our atomic animation.
             builder.addFlag(AnimatorSetBuilder.FLAG_DONT_ANIMATE_OVERVIEW);
         }
+    }
+
+    @Override
+    protected void clearState() {
+        mMotionPauseDetector.clear();
+        super.clearState();
     }
 }

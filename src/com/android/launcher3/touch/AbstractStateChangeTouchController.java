@@ -50,6 +50,8 @@ import com.android.launcher3.userevent.nano.LauncherLogProto.Action.Touch;
 import com.android.launcher3.util.FlingBlockCheck;
 import com.android.launcher3.util.PendingAnimation;
 import com.android.launcher3.util.TouchController;
+import com.sprd.ext.LogUtils;
+import com.sprd.ext.multimode.MultiModeController;
 
 /**
  * TouchController for handling state changes
@@ -121,7 +123,7 @@ public abstract class AbstractStateChangeTouchController
         if (TestProtocol.sDebugTracing) {
             Log.d(TestProtocol.NO_ALLAPPS_EVENT_TAG, "onControllerInterceptTouchEvent 1 " + ev);
         }
-        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+        if (ev.getAction() == MotionEvent.ACTION_DOWN || (ev.getSource() == 8194 && ev.getAction() == 517)) {//触摸板三指事件进入事件流程
             mNoIntercept = !canInterceptTouch(ev);
             if (mNoIntercept) {
                 return false;
@@ -146,6 +148,7 @@ public abstract class AbstractStateChangeTouchController
                     directionsToDetectScroll, ignoreSlopWhenSettling);
         }
 
+
         if (mNoIntercept) {
             return false;
         }
@@ -154,19 +157,25 @@ public abstract class AbstractStateChangeTouchController
             Log.d(TestProtocol.NO_ALLAPPS_EVENT_TAG, "onControllerInterceptTouchEvent 2 ");
         }
         onControllerTouchEvent(ev);
-        return mDetector.isDraggingOrSettling();
+        boolean result = mDetector.isDraggingOrSettling();
+        return result;
     }
 
     private int getSwipeDirection() {
         LauncherState fromState = mLauncher.getStateManager().getState();
         int swipeDirection = 0;
-        if (getTargetState(fromState, true /* isDragTowardPositive */) != fromState) {
+        if (getTargetStateExt(fromState, true /* isDragTowardPositive */) != fromState) {
             swipeDirection |= SwipeDetector.DIRECTION_POSITIVE;
         }
-        if (getTargetState(fromState, false /* isDragTowardPositive */) != fromState) {
+        if (getTargetStateExt(fromState, false /* isDragTowardPositive */) != fromState) {
             swipeDirection |= SwipeDetector.DIRECTION_NEGATIVE;
         }
         return swipeDirection;
+    }
+
+    private LauncherState getTargetStateExt(LauncherState fromState, boolean isDragTowardPositive) {
+        LauncherState targetState = getTargetState(fromState, isDragTowardPositive);
+        return MultiModeController.isSingleLayerMode() && targetState == ALL_APPS ? fromState : targetState;
     }
 
     @Override
@@ -183,7 +192,7 @@ public abstract class AbstractStateChangeTouchController
      * that direction, returns fromState.
      */
     protected abstract LauncherState getTargetState(LauncherState fromState,
-            boolean isDragTowardPositive);
+                                                    boolean isDragTowardPositive);
 
     protected abstract float initCurrentAnimation(@AnimationComponents int animComponents);
 
@@ -195,10 +204,12 @@ public abstract class AbstractStateChangeTouchController
     private boolean reinitCurrentAnimation(boolean reachedToState, boolean isDragTowardPositive) {
         LauncherState newFromState = mFromState == null ? mLauncher.getStateManager().getState()
                 : reachedToState ? mToState : mFromState;
-        LauncherState newToState = getTargetState(newFromState, isDragTowardPositive);
+        LauncherState newToState = getTargetStateExt(newFromState, isDragTowardPositive);
 
         if (newFromState == mFromState && newToState == mToState || (newFromState == newToState)) {
-            return false;
+            if (mCurrentAnimation != null) {
+                return false;
+            }
         }
 
         mFromState = newFromState;
@@ -232,7 +243,7 @@ public abstract class AbstractStateChangeTouchController
     }
 
     protected boolean goingBetweenNormalAndOverview(LauncherState fromState,
-            LauncherState toState) {
+                                                    LauncherState toState) {
         return (fromState == NORMAL || fromState == OVERVIEW)
                 && (toState == NORMAL || toState == OVERVIEW)
                 && mPendingAnimation == null;
@@ -248,7 +259,7 @@ public abstract class AbstractStateChangeTouchController
             mStartContainerType = LauncherLogProto.ContainerType.ALLAPPS;
         } else if (mStartState == NORMAL) {
             mStartContainerType = getLogContainerTypeForNormalState();
-        } else if (mStartState == OVERVIEW){
+        } else if (mStartState == OVERVIEW) {
             mStartContainerType = LauncherLogProto.ContainerType.TASKSWITCHER;
         }
         if (mCurrentAnimation == null) {
@@ -271,6 +282,7 @@ public abstract class AbstractStateChangeTouchController
         }
         mCanBlockFling = mFromState == NORMAL;
         mFlingBlockCheck.unblockFling();
+        LogUtils.d(TAG, "onDragStart,state change with anim: " + mFromState + " -> " + mToState);
     }
 
     @Override
@@ -297,7 +309,6 @@ public abstract class AbstractStateChangeTouchController
         } else {
             mFlingBlockCheck.onEvent();
         }
-
         return true;
     }
 
@@ -316,7 +327,7 @@ public abstract class AbstractStateChangeTouchController
      * play the appropriate atomic animation if so.
      */
     private void maybeUpdateAtomicAnim(LauncherState fromState, LauncherState toState,
-            float progress) {
+                                       float progress) {
         if (!goingBetweenNormalAndOverview(fromState, toState)) {
             return;
         }
@@ -324,7 +335,7 @@ public abstract class AbstractStateChangeTouchController
                 : 1f - ATOMIC_OVERVIEW_ANIM_THRESHOLD;
         boolean passedThreshold = progress >= threshold;
         if (passedThreshold != mPassedOverviewAtomicThreshold) {
-            LauncherState atomicFromState = passedThreshold ? fromState: toState;
+            LauncherState atomicFromState = passedThreshold ? fromState : toState;
             LauncherState atomicToState = passedThreshold ? toState : fromState;
             mPassedOverviewAtomicThreshold = passedThreshold;
             if (mAtomicAnim != null) {
@@ -363,14 +374,14 @@ public abstract class AbstractStateChangeTouchController
     }
 
     private AnimatorSet createAtomicAnimForState(LauncherState fromState, LauncherState targetState,
-            long duration) {
+                                                 long duration) {
         AnimatorSetBuilder builder = getAnimatorSetBuilderForStates(fromState, targetState);
         return mLauncher.getStateManager().createAtomicAnimation(fromState, targetState, builder,
                 ATOMIC_OVERVIEW_SCALE_COMPONENT, duration);
     }
 
     protected AnimatorSetBuilder getAnimatorSetBuilderForStates(LauncherState fromState,
-            LauncherState toState) {
+                                                                LauncherState toState) {
         return new AnimatorSetBuilder();
     }
 
@@ -455,7 +466,7 @@ public abstract class AbstractStateChangeTouchController
 
     /**
      * Animates the atomic components from the current progress to the final progress.
-     *
+     * <p>
      * Note that this only applies when we are controlling the atomic components separately from
      * the non-atomic components, which only happens if we reinit before the atomic animation
      * finishes.
@@ -505,7 +516,7 @@ public abstract class AbstractStateChangeTouchController
     }
 
     protected void updateSwipeCompleteAnimation(ValueAnimator animator, long expectedDuration,
-            LauncherState targetState, float velocity, boolean isFling) {
+                                                LauncherState targetState, float velocity, boolean isFling) {
         animator.setDuration(expectedDuration)
                 .setInterpolator(scrollInterpolatorForVelocity(velocity));
     }
